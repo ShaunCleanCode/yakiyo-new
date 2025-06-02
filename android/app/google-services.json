@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "196362470450",
+    "project_id": "renew-yakio",
+    "storage_bucket": "renew-yakio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:196362470450:android:73cb5121f1bc4077f4e82b",
+        "android_client_info": {
+          "package_name": "com.example.yakiyo_new"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "196362470450-l3rl2jnvgmpl0v2r1gde220vgl0amo9m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.yakiyo_new",
+            "certificate_hash": "7641df0eea67ebe4acc0b8d4ecc8babc64c5f601"
+          }
+        },
+        {
+          "client_id": "196362470450-avg7p660ogr3mj7okp93pji4ih2d83vd.apps.googleusㅁrcontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZcVAYf_Q77reN3oo2-JBnNoDgRlK7fGQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "196362470450-avg7p660ogr3mj7okp93pji4ih2d83vd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "196362470450-0cjs4iuclr1mgmo2m0tchdtlo1uvlujf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.yakiyoNew"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
