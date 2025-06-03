@@ -4,7 +4,11 @@ import '../../core/constants/assets_constants.dart';
 import '../../core/constants/routes_constants.dart';
 
 class AppMainAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const AppMainAppBar({Key? key}) : super(key: key);
+  final VoidCallback? onSettingsTap;
+  const AppMainAppBar({
+    Key? key,
+    this.onSettingsTap,
+  }) : super(key: key);
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -24,7 +28,11 @@ class AppMainAppBar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.person_outline),
           onPressed: () {
-            Navigator.pushNamed(context, RoutesConstants.settings);
+            if (onSettingsTap != null) {
+              onSettingsTap!();
+            } else {
+              Navigator.pushNamed(context, RoutesConstants.settings);
+            }
           },
         ),
       ],

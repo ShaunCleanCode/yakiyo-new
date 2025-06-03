@@ -37,7 +37,7 @@ class LoginScreen extends ConsumerWidget {
                 onPressed: () async {
                   await ref
                       .read(authProvider.notifier)
-                      .signInWithGoogle(context);
+                      .signInWithGoogle(context, ref);
                 },
               ),
               const SizedBox(height: 32),
