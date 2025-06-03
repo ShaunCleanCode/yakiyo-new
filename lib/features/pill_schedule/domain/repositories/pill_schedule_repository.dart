@@ -4,4 +4,5 @@ abstract class PillScheduleRepository {
   Future<void> addPillSchedule(PillScheduleModel schedule);
   Future<List<PillScheduleModel>> getPillSchedules();
   Future<void> updatePillSchedule(PillScheduleModel schedule);
+  Future<void> deletePillSchedule(String id);
 }

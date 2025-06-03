@@ -196,6 +196,36 @@ class _AddPillScreenState extends ConsumerState<AddPillScreen> {
           Navigator.of(context).pop();
           _showEditPillDialog(context, schedule);
         },
+        onDelete: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('약 스케줄 삭제하기'),
+              content: Text(
+                  '${schedule.name} 정 을(를)\n삭제하시겠습니까?\n\n삭제 후에는 복구할 수 없어요.\n정말 삭제하시겠어요?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('확인'),
+                ),
+              ],
+            ),
+          );
+          if (confirm == true) {
+            await ref.read(deletePillScheduleProvider(schedule).future);
+            if (mounted) {
+              ref.invalidate(pillScheduleProvider);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('약 스케쥴이 삭제되었어요')),
+              );
+              Navigator.of(context).pop();
+            }
+          }
+        },
       ),
     );
   }
@@ -433,6 +463,17 @@ class _AddPillDialogState extends ConsumerState<AddPillDialog> {
                             color: _selectedDays[index]
                                 ? ColorConstants.selectedGreen
                                 : Colors.white,
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 2,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -745,8 +786,13 @@ class _AddPillDialogState extends ConsumerState<AddPillDialog> {
 class PillDetailDialog extends StatelessWidget {
   final PillScheduleModel schedule;
   final VoidCallback onEdit;
-  const PillDetailDialog(
-      {required this.schedule, required this.onEdit, super.key});
+  final VoidCallback? onDelete;
+  const PillDetailDialog({
+    required this.schedule,
+    required this.onEdit,
+    this.onDelete,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -805,39 +851,63 @@ class PillDetailDialog extends StatelessWidget {
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           ..._buildTimeRows(schedule),
+          const SizedBox(height: 32),
+          // 버튼 영역
+          Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[200],
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('닫기'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: onEdit,
+                      child: const Text('수정하기'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: onDelete,
+                      child: const Text('삭제하기'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('닫기'),
-          ),
-        ),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.grey[200],
-              minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: onEdit,
-            child: const Text('수정하기', style: TextStyle(color: Colors.black)),
-          ),
-        ),
-      ],
     );
   }
 

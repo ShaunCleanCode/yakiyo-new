@@ -50,3 +50,9 @@ final updatePillScheduleProvider =
   final useCase = ref.read(updatePillScheduleUseCaseProvider);
   await useCase(schedule);
 });
+
+final deletePillScheduleProvider =
+    FutureProvider.family<void, PillScheduleModel>((ref, schedule) async {
+  final repository = ref.read(pillScheduleRepositoryProvider);
+  await repository.deletePillSchedule(schedule.id);
+});

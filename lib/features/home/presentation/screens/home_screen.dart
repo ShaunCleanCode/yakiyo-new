@@ -22,17 +22,32 @@ class HomeScreen extends ConsumerWidget {
     final isRefreshing = ref.watch(homeRefreshingProvider);
 
     return schedulesAsync.when(
-      data: (_) {
+      data: (schedules) {
         final todaySlotsWithId = ref.watch(todayScheduleWithPillIdProvider);
         final intakeStatus = ref.watch(todayIntakeStatusProvider);
         final nextSlotWithId = ref.watch(nextIntakeWithPillIdProvider);
 
-        if (todaySlotsWithId.isEmpty) {
+        if (schedules.isEmpty) {
+          // 1) 약 자체가 하나도 없을 때
           return Scaffold(
             backgroundColor: const Color(0xFFF8F8F8),
             body: Center(
               child: Text(
                 '등록된 약이 없습니다.\n약을 추가해 주세요!',
+                style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        if (todaySlotsWithId.isEmpty) {
+          // 2) 약은 있으나 오늘 복용할 약이 없을 때
+          return Scaffold(
+            backgroundColor: const Color(0xFFF8F8F8),
+            body: Center(
+              child: Text(
+                '오늘 복용할 약이 없습니다.',
                 style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),

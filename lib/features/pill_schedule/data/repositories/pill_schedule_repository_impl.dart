@@ -36,4 +36,9 @@ class PillScheduleRepositoryImpl implements PillScheduleRepository {
       throw Exception('Failed to update pill schedule: $e');
     }
   }
+
+  @override
+  Future<void> deletePillSchedule(String id) async {
+    await _apiService.deletePillSchedule(id);
+  }
 }

@@ -29,4 +29,10 @@ class MockPillScheduleRepository implements PillScheduleRepository {
     }
     await Future.delayed(const Duration(milliseconds: 500));
   }
+
+  @override
+  Future<void> deletePillSchedule(String id) async {
+    _mockSchedules.removeWhere((s) => s.id == id);
+    await Future.delayed(const Duration(milliseconds: 300));
+  }
 }
