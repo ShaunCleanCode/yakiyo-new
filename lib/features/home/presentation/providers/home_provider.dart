@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../pill_schedule/data/models/pill_schedule_model.dart';
 import '../../../pill_schedule/data/models/time_slot_model.dart';
 import '../../../intake_log/data/models/pill_intake_log_model.dart';
-import '../../../pill_schedule/presentation/providers/pill_schedule_provider.dart';
+import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedule_provider.dart';
 import '../../../intake_log/presentation/providers/intake_log_provider.dart';
 
 // (TimeSlotModel, pillScheduleId) 튜플 제공
@@ -15,7 +15,7 @@ class SlotWithScheduleId {
 final todayScheduleWithPillIdProvider =
     Provider<List<SlotWithScheduleId>>((ref) {
   final schedulesAsync = ref.watch(pillScheduleProvider);
-  return schedulesAsync.maybeWhen(
+  return schedulesAsync.when(
     data: (schedules) {
       final today = DateTime.now();
       final weekday = today.weekday;
@@ -31,7 +31,8 @@ final todayScheduleWithPillIdProvider =
       }
       return result;
     },
-    orElse: () => [],
+    loading: () => [],
+    error: (_, __) => [],
   );
 });
 

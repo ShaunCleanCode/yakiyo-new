@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yakiyo/core/constants/string_constants.dart';
 
 import '../../../../core/constants/assets_constants.dart';
-import '../../../pill_schedule/presentation/providers/pill_schedule_provider.dart';
+import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedule_provider.dart';
 
 class DeviceStatusScreen extends ConsumerWidget {
   const DeviceStatusScreen({super.key});

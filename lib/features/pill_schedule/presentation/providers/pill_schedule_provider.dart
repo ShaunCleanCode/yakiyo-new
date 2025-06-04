@@ -33,26 +33,72 @@ final updatePillScheduleUseCaseProvider =
 });
 
 // State Providers
-final pillScheduleProvider =
-    FutureProvider<List<PillScheduleModel>>((ref) async {
+final pillScheduleProvider = StateNotifierProvider<PillScheduleNotifier,
+    AsyncValue<List<PillScheduleModel>>>((ref) {
   final repository = ref.read(pillScheduleRepositoryProvider);
-  return await repository.getPillSchedules();
+  return PillScheduleNotifier(repository);
 });
 
+class PillScheduleNotifier
+    extends StateNotifier<AsyncValue<List<PillScheduleModel>>> {
+  final MockPillScheduleRepository _repository;
+
+  PillScheduleNotifier(this._repository) : super(const AsyncValue.loading()) {
+    loadSchedules();
+  }
+
+  Future<void> loadSchedules() async {
+    try {
+      final schedules = await _repository.getPillSchedules();
+      state = AsyncValue.data(schedules);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> addSchedule(PillScheduleModel schedule) async {
+    try {
+      await _repository.addPillSchedule(schedule);
+      await loadSchedules(); // 상태 갱신
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> updateSchedule(PillScheduleModel schedule) async {
+    try {
+      await _repository.updatePillSchedule(schedule);
+      await loadSchedules(); // 상태 갱신
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> deleteSchedule(String id) async {
+    try {
+      await _repository.deletePillSchedule(id);
+      await loadSchedules(); // 상태 갱신
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+}
+
+// Action Providers
 final addPillScheduleProvider =
     FutureProvider.family<void, PillScheduleModel>((ref, schedule) async {
-  final useCase = ref.read(addPillScheduleUseCaseProvider);
-  await useCase(schedule);
+  final notifier = ref.read(pillScheduleProvider.notifier);
+  await notifier.addSchedule(schedule);
 });
 
 final updatePillScheduleProvider =
     FutureProvider.family<void, PillScheduleModel>((ref, schedule) async {
-  final useCase = ref.read(updatePillScheduleUseCaseProvider);
-  await useCase(schedule);
+  final notifier = ref.read(pillScheduleProvider.notifier);
+  await notifier.updateSchedule(schedule);
 });
 
 final deletePillScheduleProvider =
-    FutureProvider.family<void, PillScheduleModel>((ref, schedule) async {
-  final repository = ref.read(pillScheduleRepositoryProvider);
-  await repository.deletePillSchedule(schedule.id);
+    FutureProvider.family<void, String>((ref, id) async {
+  final notifier = ref.read(pillScheduleProvider.notifier);
+  await notifier.deleteSchedule(id);
 });

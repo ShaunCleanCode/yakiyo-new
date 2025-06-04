@@ -8,31 +8,44 @@ class MockPillScheduleRepository implements PillScheduleRepository {
 
   @override
   Future<void> addPillSchedule(PillScheduleModel schedule) async {
-    // 실제 API 호출 대신 로컬 리스트에 추가
+    print('[MockPillScheduleRepository] addPillSchedule called with: '
+        'id=${schedule.id}, name=${schedule.name}, daySchedules=${schedule.daySchedules.length}');
     _mockSchedules.add(schedule);
-    // 실제 API 호출처럼 약간의 지연 추가
+    print(
+        '[MockPillScheduleRepository] Current schedules count: ${_mockSchedules.length}');
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
   @override
   Future<List<PillScheduleModel>> getPillSchedules() async {
-    // 실제 API 호출처럼 약간의 지연 추가
+    print('[MockPillScheduleRepository] getPillSchedules called');
     await Future.delayed(const Duration(milliseconds: 500));
+    print(
+        '[MockPillScheduleRepository] Returning schedules count: ${_mockSchedules.length}');
     return _mockSchedules;
   }
 
   @override
   Future<void> updatePillSchedule(PillScheduleModel schedule) async {
+    print(
+        '[MockPillScheduleRepository] updatePillSchedule called with: id=${schedule.id}');
     final index = _mockSchedules.indexWhere((s) => s.id == schedule.id);
     if (index != -1) {
       _mockSchedules[index] = schedule;
+      print('[MockPillScheduleRepository] Schedule updated at index: $index');
+    } else {
+      print('[MockPillScheduleRepository] Schedule not found for update');
     }
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
   @override
   Future<void> deletePillSchedule(String id) async {
+    print(
+        '[MockPillScheduleRepository] deletePillSchedule called with id: $id');
     _mockSchedules.removeWhere((s) => s.id == id);
+    print(
+        '[MockPillScheduleRepository] Current schedules count after delete: ${_mockSchedules.length}');
     await Future.delayed(const Duration(milliseconds: 300));
   }
 }

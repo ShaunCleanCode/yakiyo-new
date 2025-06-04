@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:yakiyo/core/routes/app_router.dart';
 import 'package:yakiyo/core/constants/routes_constants.dart';
+import 'package:yakiyo/features/settings/presentation/providers/nickname_provider.dart';
 
 final authCredentialProvider = StateProvider<AuthCredential?>((ref) => null);
 
@@ -63,6 +64,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       print('Firebase 인증 시도...');
       final userCredential = await _auth.signInWithCredential(credential);
       print('Firebase 인증 성공: ${userCredential.user?.email}');
+
+      // 닉네임(이름) 저장
+      final user = userCredential.user;
+      final nickname =
+          user?.displayName ?? user?.email?.split('@').first ?? '사용자';
+      ref.read(nicknameProvider.notifier).state = nickname;
 
       state = AsyncValue.data(userCredential.user);
 

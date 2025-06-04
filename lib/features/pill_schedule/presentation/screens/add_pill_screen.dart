@@ -5,7 +5,7 @@ import '../../../../common/widgets/pill_card.dart';
 import '../../../../common/widgets/pill_icon.dart';
 
 import '../../data/models/pill_schedule_model.dart';
-import '../providers/pill_schedule_provider.dart';
+import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedule_provider.dart';
 
 import '../../data/models/day_schedule_model.dart';
 import '../../data/models/time_slot_model.dart';
@@ -216,7 +216,7 @@ class _AddPillScreenState extends ConsumerState<AddPillScreen> {
             ),
           );
           if (confirm == true) {
-            await ref.read(deletePillScheduleProvider(schedule).future);
+            await ref.read(deletePillScheduleProvider(schedule.id).future);
             if (mounted) {
               ref.invalidate(pillScheduleProvider);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -754,6 +754,8 @@ class _AddPillDialogState extends ConsumerState<AddPillDialog> {
       }
     } catch (e) {
       if (mounted) {
+        print('PillSchedule Add Error:');
+        print(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('오류가 발생했습니다: $e')),
         );
