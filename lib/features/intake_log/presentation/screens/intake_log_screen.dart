@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yakiyo/features/settings/presentation/providers/nickname_provider.dart';
 import 'package:yakiyo/common/widgets/app_logo.dart';
 import 'package:yakiyo/core/constants/assets_constants.dart';
+import 'package:yakiyo/features/intake_log/presentation/providers/intake_log_provider.dart';
 
 class IntakeLogScreen extends ConsumerStatefulWidget {
   final DateTime? initialMonth;
@@ -159,115 +160,17 @@ class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
                           isCurrentMonth && day.day == now.day && isThisMonth;
                       final isPrevOrNextMonth = !isThisMonth;
 
-                      // 상태 결정: 실제 복용 기록 기반
-                      PillIntakeStatus status;
-                      final dateKey = DateTime(day.year, day.month, day.day);
-                      final details = dummyIntakeDetails[dateKey];
-                      if (!isThisMonth) {
-                        status = PillIntakeStatus.notRequired;
-                      } else if (day.isAfter(now)) {
-                        status = PillIntakeStatus.upcoming;
-                      } else if (details == null) {
-                        status = PillIntakeStatus.notRequired;
-                      } else {
-                        final allTaken = details.every((d) => d.taken);
-                        final noneTaken = details.every((d) => !d.taken);
-                        if (allTaken) {
-                          status = PillIntakeStatus.allTaken;
-                        } else if (noneTaken) {
-                          status = PillIntakeStatus.none;
-                        } else {
-                          status = PillIntakeStatus.partial;
-                        }
-                      }
+                      // 상태 결정: 실제 복용 기록 기반 (Provider 사용)
+                      final status = isThisMonth
+                          ? ref.watch(pillIntakeStatusForDateProvider(day))
+                          : PillIntakeStatus.notRequired;
 
                       return GestureDetector(
                         key: Key(
                             'calendar-day-${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}'),
                         onTap: isThisMonth
                             ? () {
-                                final dateKey =
-                                    DateTime(day.year, day.month, day.day);
-                                final details = dummyIntakeDetails[dateKey];
-                                final status = dummyStatus[dateKey] ??
-                                    (!isThisMonth
-                                        ? PillIntakeStatus.notRequired
-                                        : (day.isAfter(now)
-                                            ? PillIntakeStatus.upcoming
-                                            : PillIntakeStatus.upcoming));
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(
-                                        DateFormat('yyyy.MM.dd').format(day)),
-                                    content: details == null
-                                        ? Text(
-                                            '상태: ${status.toString().split('.').last}\n복용 기록 없음')
-                                        : SizedBox(
-                                            width: 250,
-                                            child: ListView.separated(
-                                              shrinkWrap: true,
-                                              itemCount: details.length,
-                                              separatorBuilder: (_, __) =>
-                                                  const Divider(height: 12),
-                                              itemBuilder: (context, idx) {
-                                                final d = details[idx];
-                                                return Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Icon(
-                                                      d.taken
-                                                          ? Icons.check_circle
-                                                          : Icons.cancel,
-                                                      color: d.taken
-                                                          ? Colors.green
-                                                          : Colors.red,
-                                                      size: 20,
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            d.pillName,
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-                                                          Text(
-                                                              '예정: ${d.scheduledTime}'),
-                                                          Text(
-                                                            d.takenTime != null
-                                                                ? '복용: ${d.takenTime}'
-                                                                : '미복용',
-                                                            style: TextStyle(
-                                                              color: d.taken
-                                                                  ? Colors.black
-                                                                  : Colors.red,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(),
-                                        child: const Text('닫기'),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                // TODO: 상세 다이얼로그도 실제 기록 기반으로 리팩터링 필요
                               }
                             : null,
                         child: SizedBox.expand(
@@ -287,14 +190,15 @@ class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: getStatusColor(status),
-                                  shape: BoxShape.circle,
+                              if (isThisMonth)
+                                Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: getStatusColor(status),
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -395,8 +299,6 @@ List<String> _extractTimeSlots(PillScheduleModel schedule) {
   }
   return timeSlots;
 }
-
-enum PillIntakeStatus { allTaken, partial, none, upcoming, notRequired }
 
 Color getStatusColor(PillIntakeStatus status) {
   switch (status) {
