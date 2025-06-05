@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
 import 'package:intl/intl.dart';
 import 'package:yakiyo/features/pill_schedule/data/models/pill_schedule_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yakiyo/features/settings/presentation/providers/nickname_provider.dart';
-import 'package:yakiyo/common/widgets/app_logo.dart';
 import 'package:yakiyo/core/constants/assets_constants.dart';
 import 'package:yakiyo/features/intake_log/presentation/providers/intake_log_provider.dart';
+import 'package:yakiyo/features/intake_log/presentation/widgets/stats_summary_body.dart';
+import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedule_provider.dart';
+import 'package:yakiyo/features/intake_log/data/models/pill_intake_log_model.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:gallery_saver/gallery_saver.dart';
 
 class IntakeLogScreen extends ConsumerStatefulWidget {
   final DateTime? initialMonth;
@@ -17,12 +26,46 @@ class IntakeLogScreen extends ConsumerStatefulWidget {
 
 class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
   late DateTime _focusedMonth;
+  bool _showConsentBody = false;
+  bool _showStatsBody = false;
+  bool _consentChecked = false;
+  final GlobalKey _statsKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _focusedMonth = widget.initialMonth ??
         DateTime(DateTime.now().year, DateTime.now().month);
+    _showConsentBody = false;
+  }
+
+  @override
+  void dispose() {
+    _showConsentBody = false;
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(IntakeLogScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (mounted) {
+      setState(() {
+        _showConsentBody = false;
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Always show calendar view when navigating to this tab
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _showConsentBody = false;
+        });
+      }
+    });
   }
 
   void _goToPreviousMonth() {
@@ -53,8 +96,259 @@ class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
     );
   }
 
+  Map<String, dynamic> _calculateIntakeStats(
+      List<PillScheduleModel> schedules, List<PillIntakeLogModel> logs) {
+    // 1. 날짜 범위 결정 (스케줄 시작~오늘)
+    if (schedules.isEmpty) {
+      return {
+        'totalDays': 0,
+        'morningRate': 0.0,
+        'lunchRate': 0.0,
+        'dinnerRate': 0.0,
+        'mostMissedSlot': '없음',
+      };
+    }
+    final startDate = schedules
+        .map((s) => s.startDate)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+    final today = DateTime.now();
+    final days = <DateTime>[];
+    for (DateTime d = DateTime(startDate.year, startDate.month, startDate.day);
+        !d.isAfter(today);
+        d = d.add(const Duration(days: 1))) {
+      days.add(d);
+    }
+    // 2. slot별 예정/성공 횟수 집계
+    final Map<String, int> total = {'아침': 0, '점심': 0, '저녁': 0};
+    final Map<String, int> taken = {'아침': 0, '점심': 0, '저녁': 0};
+    for (final date in days) {
+      final weekday = date.weekday;
+      // 오늘 날짜에 해당하는 모든 slot
+      final slots = schedules
+          .where((schedule) => !date.isBefore(DateTime(schedule.startDate.year,
+              schedule.startDate.month, schedule.startDate.day)))
+          .expand((schedule) => schedule.daySchedules
+              .where((ds) => ds.dayOfWeek == weekday)
+              .expand((ds) => ds.timeSlots))
+          .toList();
+      for (final slot in slots) {
+        String label = '';
+        final hour = slot.time.hour;
+        if (hour >= 5 && hour < 11)
+          label = '아침';
+        else if (hour >= 11 && hour < 15)
+          label = '점심';
+        else if (hour >= 15 && hour < 24) label = '저녁';
+        if (label.isEmpty) continue;
+        total[label] = total[label]! + 1;
+        final takenLog = logs.any((log) =>
+            log.timeSlotId == slot.id &&
+            log.intakeTime.year == date.year &&
+            log.intakeTime.month == date.month &&
+            log.intakeTime.day == date.day);
+        if (takenLog) taken[label] = taken[label]! + 1;
+      }
+    }
+    double rate(String label) =>
+        total[label] == 0 ? 0 : (taken[label]! / total[label]!) * 100;
+    final rates = {
+      '아침': rate('아침'),
+      '점심': rate('점심'),
+      '저녁': rate('저녁'),
+    };
+    // 누락률이 가장 높은 slot
+    String mostMissed = '없음';
+    double minRate = 101;
+    rates.forEach((k, v) {
+      if (total[k]! > 0 && v < minRate) {
+        minRate = v;
+        mostMissed = k;
+      }
+    });
+    return {
+      'totalDays': days.length,
+      'morningRate': rates['아침'],
+      'lunchRate': rates['점심'],
+      'dinnerRate': rates['저녁'],
+      'mostMissedSlot': mostMissed,
+    };
+  }
+
+  DateTime _getDateForWeekday(int weekday, int weekOffset) {
+    final now = DateTime.now();
+    final thisWeekday = now.weekday;
+    final diff = weekday - thisWeekday + (weekOffset * 7);
+    return now.add(Duration(days: diff));
+  }
+
+  Future<void> _saveStatsAsImage() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _statsKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+      final directory = await getTemporaryDirectory();
+      final filePath =
+          '${directory.path}/stats_summary_${DateTime.now().millisecondsSinceEpoch}.png';
+      final file = File(filePath);
+      await file.writeAsBytes(pngBytes);
+      await GallerySaver.saveImage(file.path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미지 저장이 완료되었습니다!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이미지 저장 실패: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final schedulesAsync = ref.watch(pillScheduleProvider);
+    final logs = ref.watch(intakeLogProvider);
+    if (_showStatsBody) {
+      if (schedulesAsync is AsyncData<List<PillScheduleModel>>) {
+        final stats = _calculateIntakeStats(schedulesAsync.value, logs);
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+              onPressed: () {
+                setState(() {
+                  _showStatsBody = false;
+                });
+              },
+            ),
+          ),
+          body: Center(
+            child: RepaintBoundary(
+              key: _statsKey,
+              child: StatsSummaryBody(
+                totalDays: stats['totalDays'],
+                morningRate: stats['morningRate'],
+                lunchRate: stats['lunchRate'],
+                dinnerRate: stats['dinnerRate'],
+                mostMissedSlot: stats['mostMissedSlot'],
+                onSave: _saveStatsAsImage,
+              ),
+            ),
+          ),
+        );
+      } else {
+        return const Center(child: CircularProgressIndicator());
+      }
+    }
+    if (_showConsentBody) {
+      // 동의 화면 Body
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            onPressed: () {
+              setState(() {
+                _showConsentBody = false;
+              });
+            },
+          ),
+        ),
+        body: Center(
+          child: Align(
+            alignment: const Alignment(0, -0.6),
+            child: Container(
+              width: 325,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 2,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 40,
+                  ),
+                  const Text(
+                    '약 통계 정보 확인하기',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    '통계 시각화를 위해\nAI 분석 도구를 사용하며,\n복용 정보만 전달됩니다.\n\n개인 정보(이름, 연락처 등)는\n저장되지 않으며 동의 후에 진행됩니다.',
+                    style: TextStyle(fontSize: 15, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _consentChecked,
+                        onChanged: (val) {
+                          setState(() {
+                            _consentChecked = val ?? false;
+                          });
+                        },
+                      ),
+                      const Text('동의합니다.', style: TextStyle(fontSize: 15)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _consentChecked
+                          ? () {
+                              setState(() {
+                                _showStatsBody = true;
+                              });
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('다음', style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     final nickname = ref.watch(nicknameProvider) ?? '사용자';
     final now = DateTime.now();
     final month = _focusedMonth.month;
@@ -213,7 +507,9 @@ class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
             Center(
               child: GestureDetector(
                 onTap: () {
-                  // TODO: 통계 그래프 화면 이동
+                  setState(() {
+                    _showConsentBody = true;
+                  });
                 },
                 child: Container(
                   width: MediaQuery.of(context).size.width - 32,
