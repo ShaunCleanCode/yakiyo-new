@@ -11,22 +11,79 @@ Yakiyo is an innovative IoT-powered application designed to help users efficient
 - **Event Logging**: Comprehensive event and error logs
 - **Intake Tracking**: Visual calendar, statistics, and intake confirmation
 
-## 🗂️ Project Structure
+## ��️ Project Structure (Detailed)
 
 ```
 lib/
-├── common/          # Shared widgets and utilities
-├── core/            # Core functionality and constants
-├── features/        # Feature-based modules
-│   ├── auth/        # Authentication
-│   ├── device_status/
-│   ├── event_log/
-│   ├── home/
-│   ├── intake_log/
-│   ├── pill_schedule/
-│   └── settings/
-└── services/        # Service layer implementations
+├── common/                # Shared widgets, icons, themes, and utility functions
+│   ├── widgets/           # Reusable UI components (e.g., PillCard, PillIcon)
+│   ├── themes/            # App-wide color and style definitions
+│   └── utils.dart         # Utility/helper functions
+│
+├── core/                  # Core app logic, constants, and configuration
+│   ├── constants/         # App-wide constants (colors, strings, etc.)
+│   ├── exceptions/        # Custom exception classes
+│   └── config.dart        # App configuration and environment setup
+│
+├── features/              # Feature-based modules (Clean Architecture)
+│   ├── auth/              # User authentication (sign-in, sign-up, profile)
+│   │   ├── data/          # Data sources, models, repositories for auth
+│   │   ├── domain/        # Auth business logic, use cases, entities
+│   │   └── presentation/  # Auth screens, viewmodels, providers
+│   │
+│   ├── device_status/     # IoT device connection & status
+│   │   ├── data/          # Device status models, repositories
+│   │   └── presentation/  # Device status UI, providers
+│   │
+│   ├── event_log/         # Event and error logging
+│   │   ├── data/          # Event log models, repositories
+│   │   └── presentation/  # Event log UI, providers
+│   │
+│   ├── home/              # Home screen/dashboard
+│   │   ├── presentation/  # Home screen UI, navigation, providers
+│   │
+│   ├── intake_log/        # Pill intake tracking & statistics
+│   │   ├── data/          # Intake log models, repositories
+│   │   ├── domain/        # Intake log business logic, use cases
+│   │   └── presentation/  # Intake log screens (calendar, stats), providers
+│   │
+│   ├── pill_schedule/     # Medication schedule management
+│   │   ├── data/          # Pill schedule models, repositories
+│   │   ├── domain/        # Schedule business logic, use cases
+│   │   └── presentation/  # Schedule screens (add/edit), providers
+│   │
+│   └── settings/          # User settings (nickname, preferences)
+│       ├── data/          # Settings models, repositories
+│       └── presentation/  # Settings UI, providers
+│
+└── services/              # Service layer (API, Firebase, IoT, etc.)
+    ├── api/               # REST API clients and endpoints
+    ├── firebase/          # Firebase integration (auth, firestore, etc.)
+    └── iot/               # IoT device communication logic
 ```
+
+### Module Descriptions
+- **common/**: Shared UI widgets (e.g., PillCard), icons, themes, and utility functions used throughout the app.
+- **core/**: App-wide constants, configuration, and error handling.
+- **features/**: Each major feature is a self-contained module following Clean Architecture (data/domain/presentation layers).
+  - **auth/**: Handles user authentication, sign-in, sign-up, and profile management.
+  - **device_status/**: Manages IoT device connection, battery, and sync status.
+  - **event_log/**: Logs all significant events and errors for troubleshooting.
+  - **home/**: Home dashboard, showing today's schedule, next pill, and summary.
+  - **intake_log/**: Tracks pill intake, provides calendar/statistics, and AI-powered summaries.
+  - **pill_schedule/**: Manages medication schedules, including add/edit/delete and time slots.
+  - **settings/**: User preferences, nickname, and notification settings.
+- **services/**: Integrations with external services (REST API, Firebase, IoT communication).
+
+## 🔄 Main Application Flow
+
+1. **User Authentication**: Users sign in or register. Auth state is managed and propagated throughout the app.
+2. **Home Dashboard**: Shows today's medication schedule, next pill time, and device status. Pulls data from pill_schedule, intake_log, and device_status features.
+3. **Medication Scheduling**: Users can add, edit, or delete pill schedules. Schedules are reflected in the home dashboard and intake log.
+4. **Intake Logging**: Users confirm pill intake, which is logged and visualized in a calendar/statistics view. AI-powered summaries highlight missed or perfect adherence.
+5. **Device Monitoring**: Real-time IoT device status (connection, battery, sync) is displayed and updated.
+6. **Event Logging**: All significant actions and errors are logged for transparency and troubleshooting.
+7. **Settings**: Users can update their nickname, notification preferences, and other settings.
 
 ## 🚀 Getting Started
 
