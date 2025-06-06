@@ -1,45 +1,72 @@
-# Yakiyo New
+# Yakiyo - IoT-based Redosing Management App
 
-## 개발 환경
-- Flutter SDK: 최신 버전
-- Xcode: 16.0 (Build version 16A242d)
-- iOS 최소 배포 버전: 13.0
-- macOS: 23.6.0 (M1 Max)
+Yakiyo is an innovative IoT-powered application designed to help users efficiently manage their medication schedules and prevent accidental redosing. With a focus on user safety and convenience, Yakiyo integrates device connectivity, real-time tracking, and a clean, modular architecture.
 
-## 주요 설정
-1. iOS 설정
-   - Podfile에서 iOS 플랫폼 버전을 13.0으로 설정
-   - Firebase Auth를 위한 최소 iOS 버전 요구사항 충족
+## ✨ Features
 
-2. Firebase 설정
-   - GoogleService-Info.plist 파일이 iOS와 macOS 프로젝트에 포함됨
-   - Firebase Auth 설정 완료
+- **Clean Architecture** for scalable and maintainable codebase
+- **Medication Schedule Management**: Add, edit, and track your pill schedules
+- **User Authentication**: Secure sign-in and profile management
+- **Device Status Monitoring**: Real-time IoT device connectivity and battery status
+- **Event Logging**: Comprehensive event and error logs
+- **Intake Tracking**: Visual calendar, statistics, and intake confirmation
 
-## 프로젝트 구조
-- lib/
-  - common/: 공통 위젯 및 에셋
-  - core/: 앱의 핵심 설정 및 상수
-  - features/: 주요 기능별 모듈
-  - services/: API 및 서비스 관련 코드
+## 🗂️ Project Structure
 
-## 실행 방법
-1. Flutter 의존성 설치
-```bash
-flutter pub get
+```
+lib/
+├── common/          # Shared widgets and utilities
+├── core/            # Core functionality and constants
+├── features/        # Feature-based modules
+│   ├── auth/        # Authentication
+│   ├── device_status/
+│   ├── event_log/
+│   ├── home/
+│   ├── intake_log/
+│   ├── pill_schedule/
+│   └── settings/
+└── services/        # Service layer implementations
 ```
 
-2. iOS 의존성 설치
-```bash
-cd ios
-pod install
-cd ..
-```
+## 🚀 Getting Started
 
-3. 앱 실행
-```bash
-flutter run
-```
+1. **Clone the repository**
+    ```bash
+    git clone https://github.com/ShaunCleanCode/yakiyo-new.git
+    ```
 
-## 주의사항
-- iOS 시뮬레이터 실행 시 iOS 13.0 이상 필요
-- Firebase Auth 사용을 위한 적절한 설정 필요
+2. **Install dependencies**
+    ```bash
+    flutter pub get
+    ```
+
+3. **Run the app**
+    ```bash
+    flutter run
+    ```
+
+## 🛠️ Development Environment
+
+- **Flutter SDK**: latest stable
+- **Xcode**: 16.0 (Build version 16A242d)
+- **macOS**: 23.6.0 (M1 Max)
+- **iOS Minimum Deployment Target**: 13.0
+- **Firebase**: Auth enabled
+
+## 🧰 Tech Stack
+
+- **Flutter** (cross-platform UI)
+- **Firebase** (authentication, backend)
+- **Clean Architecture**
+- **Riverpod/Provider** (state management)
+- **IoT Device Integration**
+
+## 🛡️ License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
