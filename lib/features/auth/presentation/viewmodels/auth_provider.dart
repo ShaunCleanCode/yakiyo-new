@@ -8,9 +8,13 @@ import 'package:yakiyo/features/settings/presentation/providers/nickname_provide
 
 final authCredentialProvider = StateProvider<AuthCredential?>((ref) => null);
 
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+
 final authProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
-  final notifier = AuthNotifier();
+  final firebaseAuth = ref.watch(firebaseAuthProvider);
+  final notifier = AuthNotifier(firebaseAuth: firebaseAuth);
   ref.onDispose(() {
     // 필요한 정리 작업
   });
@@ -19,9 +23,11 @@ final authProvider =
 
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth;
 
-  AuthNotifier() : super(const AsyncValue.data(null));
+  AuthNotifier({required FirebaseAuth firebaseAuth})
+      : _auth = firebaseAuth,
+        super(const AsyncValue.data(null));
 
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => currentUser != null;

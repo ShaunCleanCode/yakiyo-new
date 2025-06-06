@@ -21,7 +21,7 @@ class GetPillSchedulesUseCase {
             timeSlots.add('아침');
           } else if (hour >= 11 && hour < 15 && !timeSlots.contains('점심')) {
             timeSlots.add('점심');
-          } else if (hour >= 15 && hour < 21 && !timeSlots.contains('저녁')) {
+          } else if (hour >= 15 && hour < 24 && !timeSlots.contains('저녁')) {
             timeSlots.add('저녁');
           }
         }

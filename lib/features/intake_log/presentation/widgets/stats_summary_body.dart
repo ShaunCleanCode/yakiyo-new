@@ -103,11 +103,20 @@ class StatsSummaryBody extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.error, color: Color(0xFFE53935)),
+                Icon(
+                  mostMissedSlot == '모든 시간대 완벽하게 복용'
+                      ? Icons.check_circle
+                      : Icons.error,
+                  color: mostMissedSlot == '모든 시간대 완벽하게 복용'
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFE53935),
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '가장 누락이 많은 시간대는\n"$mostMissedSlot"이에요',
+                    mostMissedSlot == '모든 시간대 완벽하게 복용'
+                        ? mostMissedSlot
+                        : '가장 누락이 많은 시간대는\n"$mostMissedSlot"이에요',
                     style: const TextStyle(fontSize: 15, color: Colors.black),
                   ),
                 ),

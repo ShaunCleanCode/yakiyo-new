@@ -21,7 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hour = slot.time.hour;
     if (hour >= 5 && hour < 11) return '아침';
     if (hour >= 11 && hour < 15) return '점심';
-    if (hour >= 15 && hour < 21) return '저녁';
+    if (hour >= 15 && hour < 24) return '저녁';
     return '기타';
   }
 
@@ -190,7 +190,7 @@ class PillScheduleCard extends ConsumerWidget {
       final hour = slot.time.hour;
       if (hour >= 5 && hour < 11) return '아침';
       if (hour >= 11 && hour < 15) return '점심';
-      if (hour >= 15 && hour < 21) return '저녁';
+      if (hour >= 15 && hour < 24) return '저녁';
       return '기타';
     }
 
@@ -404,7 +404,7 @@ class PillScheduleCard extends ConsumerWidget {
     final hour = slot.time.hour;
     if (hour >= 5 && hour < 11) return '아침';
     if (hour >= 11 && hour < 15) return '점심';
-    if (hour >= 15 && hour < 21) return '저녁';
+    if (hour >= 15 && hour < 24) return '저녁';
     return '기타';
   }
 }

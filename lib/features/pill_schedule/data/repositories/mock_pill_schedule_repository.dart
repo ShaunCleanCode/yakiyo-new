@@ -10,7 +10,15 @@ class MockPillScheduleRepository implements PillScheduleRepository {
   Future<void> addPillSchedule(PillScheduleModel schedule) async {
     print('[MockPillScheduleRepository] addPillSchedule called with: '
         'id=${schedule.id}, name=${schedule.name}, daySchedules=${schedule.daySchedules.length}');
-    _mockSchedules.add(schedule);
+    final index = _mockSchedules.indexWhere((s) => s.id == schedule.id);
+    if (index != -1) {
+      _mockSchedules[index] = schedule;
+      print(
+          '[MockPillScheduleRepository] Schedule updated at index: $index (via add)');
+    } else {
+      _mockSchedules.add(schedule);
+      print('[MockPillScheduleRepository] Schedule added');
+    }
     print(
         '[MockPillScheduleRepository] Current schedules count: ${_mockSchedules.length}');
     await Future.delayed(const Duration(milliseconds: 500));

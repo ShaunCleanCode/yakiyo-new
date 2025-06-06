@@ -156,13 +156,19 @@ class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
       '점심': rate('점심'),
       '저녁': rate('저녁'),
     };
-    // 누락률이 가장 높은 slot
+    // 누락률이 가장 높은 slot 찾기
     String mostMissed = '없음';
     double minRate = 101;
+    int maxTotal = 0;
+    bool allPerfect = true;
     rates.forEach((k, v) {
-      if (total[k]! > 0 && v < minRate) {
-        minRate = v;
-        mostMissed = k;
+      if (total[k]! > 0) {
+        if (v < 100) allPerfect = false;
+        if (v < minRate || (v == minRate && total[k]! > maxTotal)) {
+          minRate = v;
+          mostMissed = k;
+          maxTotal = total[k]!;
+        }
       }
     });
     return {
@@ -170,7 +176,7 @@ class _IntakeLogScreenState extends ConsumerState<IntakeLogScreen> {
       'morningRate': rates['아침'],
       'lunchRate': rates['점심'],
       'dinnerRate': rates['저녁'],
-      'mostMissedSlot': mostMissed,
+      'mostMissedSlot': allPerfect ? '모든 시간대 완벽하게 복용' : mostMissed,
     };
   }
 
@@ -589,7 +595,7 @@ List<String> _extractTimeSlots(PillScheduleModel schedule) {
       timeSlots.add('아침');
     } else if (hour >= 11 && hour < 15 && !timeSlots.contains('점심')) {
       timeSlots.add('점심');
-    } else if (hour >= 15 && hour < 21 && !timeSlots.contains('저녁')) {
+    } else if (hour >= 15 && hour < 24 && !timeSlots.contains('저녁')) {
       timeSlots.add('저녁');
     }
   }

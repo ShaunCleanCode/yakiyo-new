@@ -16,7 +16,15 @@ extension DateTimeToTimeOfDay on DateTime {
 }
 
 class AddPillScreen extends ConsumerStatefulWidget {
-  const AddPillScreen({super.key});
+  final void Function(BuildContext context, WidgetRef ref)? onShowAddPillDialog;
+  final void Function(BuildContext context, PillScheduleModel schedule)?
+      onShowPillDetailDialog;
+
+  const AddPillScreen({
+    super.key,
+    this.onShowAddPillDialog,
+    this.onShowPillDetailDialog,
+  });
 
   @override
   ConsumerState<AddPillScreen> createState() => _AddPillScreenState();
@@ -165,7 +173,7 @@ class _AddPillScreenState extends ConsumerState<AddPillScreen> {
         timeSlots.add('아침');
       } else if (hour >= 11 && hour < 15 && !timeSlots.contains('점심')) {
         timeSlots.add('점심');
-      } else if (hour >= 15 && hour < 21 && !timeSlots.contains('저녁')) {
+      } else if (hour >= 15 && hour < 24 && !timeSlots.contains('저녁')) {
         timeSlots.add('저녁');
       }
     }
@@ -180,54 +188,62 @@ class _AddPillScreenState extends ConsumerState<AddPillScreen> {
   }
 
   void _showAddPillDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => const AddPillDialog(),
-    );
+    if (widget.onShowAddPillDialog != null) {
+      widget.onShowAddPillDialog!(context, ref);
+    } else {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => const AddPillDialog(),
+      );
+    }
   }
 
   void _showPillDetailDialog(BuildContext context, PillScheduleModel schedule) {
-    showDialog(
-      context: context,
-      builder: (context) => PillDetailDialog(
-        schedule: schedule,
-        onEdit: () {
-          Navigator.of(context).pop();
-          _showEditPillDialog(context, schedule);
-        },
-        onDelete: () async {
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('약 스케줄 삭제하기'),
-              content: Text(
-                  '${schedule.name} 정 을(를)\n삭제하시겠습니까?\n\n삭제 후에는 복구할 수 없어요.\n정말 삭제하시겠어요?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('취소'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('확인'),
-                ),
-              ],
-            ),
-          );
-          if (confirm == true) {
-            await ref.read(deletePillScheduleProvider(schedule.id).future);
-            if (mounted) {
-              ref.invalidate(pillScheduleProvider);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('약 스케쥴이 삭제되었어요')),
-              );
-              Navigator.of(context).pop();
+    if (widget.onShowPillDetailDialog != null) {
+      widget.onShowPillDetailDialog!(context, schedule);
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => PillDetailDialog(
+          schedule: schedule,
+          onEdit: () {
+            Navigator.of(context).pop();
+            _showEditPillDialog(context, schedule);
+          },
+          onDelete: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('약 스케줄 삭제하기'),
+                content: Text(
+                    '${schedule.name} 정 을(를)\n삭제하시겠습니까?\n\n삭제 후에는 복구할 수 없어요.\n정말 삭제하시겠어요?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('취소'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('확인'),
+                  ),
+                ],
+              ),
+            );
+            if (confirm == true) {
+              await ref.read(deletePillScheduleProvider(schedule.id).future);
+              if (mounted) {
+                ref.invalidate(pillScheduleProvider);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('약 스케쥴이 삭제되었어요')),
+                );
+                Navigator.of(context).pop();
+              }
             }
-          }
-        },
-      ),
-    );
+          },
+        ),
+      );
+    }
   }
 
   void _showEditPillDialog(BuildContext context, PillScheduleModel schedule) {
@@ -325,7 +341,7 @@ class _AddPillDialogState extends ConsumerState<AddPillDialog> {
   String _getTimeLabel(DateTime time) {
     if (time.hour >= 5 && time.hour < 11) return '아침';
     if (time.hour >= 11 && time.hour < 15) return '점심';
-    if (time.hour >= 15 && time.hour < 21) return '저녁';
+    if (time.hour >= 15 && time.hour < 24) return '저녁';
     return '';
   }
 
@@ -702,6 +718,8 @@ class _AddPillDialogState extends ConsumerState<AddPillDialog> {
         final timeSlots = <TimeSlotModel>[];
         _mealTimes.forEach((label, timeOfDay) {
           if (timeOfDay != null) {
+            // label별로 하나만 생성
+            timeSlots.removeWhere((slot) => _getTimeLabel(slot.time) == label);
             timeSlots.add(TimeSlotModel(
               id: DateTime.now().microsecondsSinceEpoch.toString(),
               time: DateTime(
@@ -736,10 +754,15 @@ class _AddPillDialogState extends ConsumerState<AddPillDialog> {
       isActive: true,
     );
 
+    print(
+        '[AddPillDialog] isEdit: [32m${widget.isEdit}[0m, initialId: [32m${widget.initialSchedule?.id}[0m, scheduleId: [32m${schedule.id}[0m');
+
     try {
       if (widget.isEdit && widget.initialSchedule != null) {
+        print('[AddPillDialog] updatePillScheduleProvider 호출');
         await ref.read(updatePillScheduleProvider(schedule).future);
       } else {
+        print('[AddPillDialog] addPillScheduleProvider 호출');
         await ref.read(addPillScheduleProvider(schedule).future);
       }
       if (mounted) {
@@ -941,7 +964,7 @@ class PillDetailDialog extends StatelessWidget {
   String _getTimeLabel(DateTime time) {
     if (time.hour >= 5 && time.hour < 11) return '아침';
     if (time.hour >= 11 && time.hour < 15) return '점심';
-    if (time.hour >= 15 && time.hour < 21) return '저녁';
+    if (time.hour >= 15 && time.hour < 24) return '저녁';
     return '';
   }
 }
