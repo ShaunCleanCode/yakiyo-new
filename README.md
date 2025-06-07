@@ -93,14 +93,14 @@ lib/
     ```
 
 2. **Install dependencies**
-    ```bash
-    flutter pub get
-    ```
+```bash
+flutter pub get
+```
 
 3. **Run the app**
-    ```bash
-    flutter run
-    ```
+```bash
+flutter run
+```
 
 ## 🛠️ Development Environment
 

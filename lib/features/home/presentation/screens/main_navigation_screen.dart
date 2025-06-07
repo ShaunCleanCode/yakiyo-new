@@ -3,7 +3,7 @@ import 'package:yakiyo/common/widgets/bottom_nav_bar.dart';
 import 'package:yakiyo/common/widgets/app_main_appbar.dart';
 import 'package:yakiyo/features/home/presentation/screens/home_screen.dart';
 import 'package:yakiyo/features/intake_log/presentation/screens/intake_log_screen.dart';
-import 'package:yakiyo/features/device_status/presentation/screens/device_status_screen.dart';
+
 import 'package:yakiyo/features/pill_schedule/presentation/screens/add_pill_screen.dart';
 import 'package:yakiyo/features/settings/presentation/screens/settings_screen.dart';
 

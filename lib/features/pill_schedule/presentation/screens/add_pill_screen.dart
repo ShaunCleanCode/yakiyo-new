@@ -10,6 +10,7 @@ import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedu
 import '../../data/models/day_schedule_model.dart';
 import '../../data/models/time_slot_model.dart';
 import '../../../../core/constants/color_constants.dart';
+import 'package:yakiyo/common/widgets/empty_pill.dart';
 
 extension DateTimeToTimeOfDay on DateTime {
   TimeOfDay toTimeOfDay() => TimeOfDay(hour: hour, minute: minute);
@@ -84,8 +85,22 @@ class _AddPillScreenState extends ConsumerState<AddPillScreen> {
       body: pillSchedulesAsync.when(
         data: (pillSchedules) {
           if (pillSchedules.isEmpty) {
-            return const Center(
-              child: Text('알약 추가 화면'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  EmptyPill(width: 120, height: 120),
+                  const SizedBox(height: 24),
+                  const Text(
+                    '아직 등록된 약이 없어요.\n'
+                    '오른쪽 하단에 + 버튼을 눌러\n'
+                    '첫 번째 약을 추가해보세요!',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             );
           }
           return RefreshIndicator(

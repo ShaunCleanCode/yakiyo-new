@@ -5,10 +5,10 @@ import 'package:yakiyo/features/home/presentation/screens/main_navigation_screen
 import 'package:yakiyo/features/event_log/presentation/screens/event_log_screen.dart';
 import 'package:yakiyo/features/intake_log/presentation/screens/intake_log_screen.dart';
 import 'package:yakiyo/features/device_status/presentation/screens/device_status_screen.dart';
-import 'package:yakiyo/features/pill_schedule/presentation/screens/pill_schedule_screen.dart';
 import 'package:yakiyo/features/pill_schedule/presentation/screens/add_pill_screen.dart';
 import 'package:yakiyo/features/settings/presentation/screens/settings_screen.dart';
 
+/// Router class that handles all navigation in the app
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -23,9 +23,6 @@ class AppRouter {
 
       case RoutesConstants.intakeLog:
         return MaterialPageRoute(builder: (_) => const IntakeLogScreen());
-
-      case RoutesConstants.pillSchedule:
-        return MaterialPageRoute(builder: (_) => const PillScheduleScreen());
 
       case RoutesConstants.addPill:
         return MaterialPageRoute(builder: (_) => const AddPillScreen());
@@ -47,7 +44,7 @@ class AppRouter {
     }
   }
 
-  // Navigation methods
+  /// Navigation methods
   static void push(BuildContext context, String routeName) {
     Navigator.pushNamed(context, routeName);
   }

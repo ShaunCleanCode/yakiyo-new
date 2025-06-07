@@ -1,75 +1,74 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../pill_schedule/data/models/pill_schedule_model.dart';
-import '../../../pill_schedule/data/models/time_slot_model.dart';
-import '../../../intake_log/data/models/pill_intake_log_model.dart';
+import 'package:yakiyo/features/home/domain/repositories/home_repository.dart';
+
 import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedule_provider.dart';
-import '../../../intake_log/presentation/providers/intake_log_provider.dart';
+import 'package:yakiyo/features/intake_log/presentation/providers/intake_log_provider.dart';
+import 'package:yakiyo/features/home/data/models/home_model.dart';
+import 'package:yakiyo/features/home/domain/use_cases/get_today_schedule_use_case.dart';
+import 'package:yakiyo/features/home/domain/use_cases/get_today_intake_status_use_case.dart';
+import 'package:yakiyo/features/home/domain/use_cases/get_next_intake_use_case.dart';
+import 'package:yakiyo/features/home/data/repositories/home_repository_impl.dart';
 
-// (TimeSlotModel, pillScheduleId) 튜플 제공
-class SlotWithScheduleId {
-  final TimeSlotModel slot;
-  final String pillScheduleId;
-  SlotWithScheduleId(this.slot, this.pillScheduleId);
-}
+/// Provider for managing the refreshing state of the home screen
+final homeRefreshingProvider = StateProvider<bool>((ref) => false);
 
+/// Provider for the home repository
+final homeRepositoryProvider = Provider<HomeRepository>((ref) {
+  return HomeRepositoryImpl();
+});
+
+/// Provider for the get today schedule use case
+final getTodayScheduleUseCaseProvider =
+    Provider<GetTodayScheduleUseCase>((ref) {
+  final repository = ref.watch(homeRepositoryProvider);
+  return GetTodayScheduleUseCase(repository);
+});
+
+/// Provider for the get today intake status use case
+final getTodayIntakeStatusUseCaseProvider =
+    Provider<GetTodayIntakeStatusUseCase>((ref) {
+  final repository = ref.watch(homeRepositoryProvider);
+  return GetTodayIntakeStatusUseCase(repository);
+});
+
+/// Provider for the get next intake use case
+final getNextIntakeUseCaseProvider = Provider<GetNextIntakeUseCase>((ref) {
+  final repository = ref.watch(homeRepositoryProvider);
+  return GetNextIntakeUseCase(repository);
+});
+
+/// Provider that combines time slots with their schedule IDs for today
 final todayScheduleWithPillIdProvider =
     Provider<List<SlotWithScheduleId>>((ref) {
   final schedulesAsync = ref.watch(pillScheduleProvider);
+  final useCase = ref.watch(getTodayScheduleUseCaseProvider);
+
   return schedulesAsync.when(
-    data: (schedules) {
-      final today = DateTime.now();
-      final weekday = today.weekday;
-      final result = <SlotWithScheduleId>[];
-      for (final schedule in schedules) {
-        for (final day in schedule.daySchedules) {
-          if (day.dayOfWeek == weekday) {
-            for (final slot in day.timeSlots) {
-              result.add(SlotWithScheduleId(slot, schedule.id));
-            }
-          }
-        }
-      }
-      return result;
-    },
+    data: (schedules) => useCase(schedules),
     loading: () => [],
     error: (_, __) => [],
   );
 });
 
+/// Provider that tracks the intake status for today's time slots
 final todayIntakeStatusProvider = Provider<Map<String, bool>>((ref) {
   final todaySlots = ref.watch(todayScheduleWithPillIdProvider);
   final logs = ref.watch(intakeLogProvider);
-  final today = DateTime.now();
-  final status = <String, bool>{};
-  for (final slotWithId in todaySlots) {
-    final slot = slotWithId.slot;
-    final taken = logs.any((log) =>
-        log.timeSlotId == slot.id &&
-        log.intakeTime.year == today.year &&
-        log.intakeTime.month == today.month &&
-        log.intakeTime.day == today.day);
-    status[slot.id] = taken;
-  }
-  return status;
+  final useCase = ref.watch(getTodayIntakeStatusUseCaseProvider);
+
+  return useCase(todaySlots, logs);
 });
 
+/// Provider that determines the next intake slot with its schedule ID
 final nextIntakeWithPillIdProvider = Provider<SlotWithScheduleId?>((ref) {
   final todaySlots = ref.watch(todayScheduleWithPillIdProvider);
   final status = ref.watch(todayIntakeStatusProvider);
-  final now = DateTime.now();
-  final remaining = todaySlots.where((slotWithId) {
-    final slot = slotWithId.slot;
-    final taken = status[slot.id] ?? false;
-    final slotTime = DateTime(
-        now.year, now.month, now.day, slot.time.hour, slot.time.minute);
-    return !taken && slotTime.isAfter(now);
-  }).toList();
-  remaining.sort((a, b) => a.slot.time.compareTo(b.slot.time));
-  return remaining.isNotEmpty ? remaining.first : null;
+  final useCase = ref.watch(getNextIntakeUseCaseProvider);
+
+  return useCase(todaySlots, status);
 });
 
-final homeRefreshingProvider = StateProvider<bool>((ref) => false);
-
+/// Provider that checks if we're within the intake window for the next medication
 final isWithinIntakeWindowProvider = Provider<bool>((ref) {
   final nextSlot = ref.watch(nextIntakeWithPillIdProvider);
   if (nextSlot == null) return false;
@@ -87,6 +86,7 @@ final isWithinIntakeWindowProvider = Provider<bool>((ref) {
   return difference <= 30;
 });
 
+/// Provider that generates the message for the next intake time
 final nextIntakeTimeMessageProvider = Provider<String>((ref) {
   final nextSlot = ref.watch(nextIntakeWithPillIdProvider);
   final isWithinWindow = ref.watch(isWithinIntakeWindowProvider);

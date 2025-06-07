@@ -1,7 +1,5 @@
 import '../../domain/repositories/pill_schedule_repository.dart';
 import '../models/pill_schedule_model.dart';
-import '../models/day_schedule_model.dart';
-import '../models/time_slot_model.dart';
 
 class MockPillScheduleRepository implements PillScheduleRepository {
   final List<PillScheduleModel> _mockSchedules = [];

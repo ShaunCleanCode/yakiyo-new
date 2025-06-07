@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/pill_intake_log_model.dart';
 import 'package:yakiyo/features/pill_schedule/presentation/providers/pill_schedule_provider.dart';
-import 'package:yakiyo/features/pill_schedule/data/models/time_slot_model.dart';
+
 import 'package:yakiyo/features/pill_schedule/data/models/pill_schedule_model.dart';
-import 'package:flutter/material.dart';
 
 class IntakeLogNotifier extends StateNotifier<List<PillIntakeLogModel>> {
   IntakeLogNotifier() : super([]);
